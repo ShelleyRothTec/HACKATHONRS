@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Challenge 2: Accelerometer 3D Cube</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+        }
+        .difficulty {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.3);
+            padding: 5px 15px;
+            border-radius: 20px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section h2 {
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+            color: #333;
+        }
+        .section h3 {
+            color: #667eea;
+            margin-top: 20px;
+        }
+        ul, ol {
+            margin: 10px 0;
+            padding-left: 30px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        .code-block {
+            background: #f5f5f5;
+            border-left: 4px solid #667eea;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px 15px;
+            margin: 15px 0;
+        }
+        .success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 10px 15px;
+            margin: 15px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        table th {
+            background-color: #667eea;
+            color: white;
+        }
+        .diagram {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+        }
+        .diagram-box {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 15px 25px;
+            margin: 5px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Challenge 2: Accelerometer 3D Cube</h1>
+        <div class="difficulty">🎯 Medium Difficulty • 30 Points • All or Nothing</div>
+    </div>
+
+    <div class="section">
+        <h2>Challenge Overview</h2>
+        <p>
+            Transform the onboard ADXL345 accelerometer into a 3D input device! Read acceleration data on the FPGA, 
+            send it to the ESP32 over UART, and render a wireframe 3D cube on the OLED that rotates smoothly as you tilt 
+            the DE10-Lite board. This challenge combines embedded hardware interfacing with 3D graphics rendering.
+        </p>
+    </div>
+
+    <div class="section">
+        <h2>System Architecture</h2>
+        <div class="diagram">
+            <div style="margin: 20px 0;">
+                <div class="diagram-box">ADXL345<br>(on-board)</div>
+                ↓ SPI
+                <div class="diagram-box">FPGA<br>DE10-Lite</div>
+                ↓ UART (JP1)
+                <div class="diagram-box">ESP32<br>DevKit</div>
+                → OLED Display
+            </div>
+        </div>
+        <p>
+            <strong>Signal Flow:</strong>
+        </p>
+        <ol>
+            <li>FPGA periodically reads X, Y, Z acceleration from ADXL345 via SPI</li>
+            <li>FPGA sends raw 16-bit acceleration values to ESP32 over UART (9600 baud, JP1 header)</li>
+            <li>ESP32 receives 6-byte acceleration packet (3 × 16-bit little-endian)</li>
+            <li>ESP32 converts acceleration to pitch/roll angles</li>
+            <li>3D cube is rotated and rendered on 128×64 OLED display</li>
+        </ol>
+    </div>
+
+    <div class="section">
+        <h2>Requirements</h2>
+        <h3>FPGA Requirements</h3>
+        <ul>
+            <li>✅ Read 3-axis acceleration (X, Y, Z) from onboard ADXL345 accelerometer via SPI</li>
+            <li>✅ Poll accelerometer every ~100 ms (at minimum 10 Hz update rate)</li>
+            <li>✅ Send raw 16-bit signed acceleration values to ESP32 over UART</li>
+            <li>✅ Packet format: [X_low, X_high, Y_low, Y_high, Z_low, Z_high] (6 bytes, little-endian)</li>
+            <li>✅ UART: 9600 baud, 8N1, using JP1 GPIO header pins</li>
+            <li>✅ Show tilt direction on LEDR[9:0]: light LEDs in the direction of tilt</li>
+            <li>✅ Display acceleration values on 7-segment displays (for debugging)</li>
+        </ul>
+        
+        <h3>ESP32 Requirements</h3>
+        <ul>
+            <li>✅ Read UART packets from FPGA at 9600 baud (RX on GPIO 16, TX on GPIO 17)</li>
+            <li>✅ Parse 6-byte acceleration data into X, Y, Z signed 16-bit values</li>
+            <li>✅ Convert raw acceleration to pitch and roll angles (±90 degrees)</li>
+            <li>✅ Render wireframe 3D cube on 128×64 OLED display</li>
+            <li>✅ Apply real-time 3D rotation based on pitch (Y-axis) and roll (X-axis)</li>
+            <li>✅ Update cube display at minimum 10 Hz (ideally 30+ Hz for smooth rotation)</li>
+            <li>✅ Show acceleration values and angles on OLED for debugging</li>
+        </ul>
+
+        <h3>Integration Requirements</h3>
+        <ul>
+            <li>✅ Cube must visibly rotate when board is tilted</li>
+            <li>✅ Rotation must be smooth and responsive (latency &lt; 200 ms)</li>
+            <li>✅ No data corruption or loss during continuous operation</li>
+            <li>✅ Board must run continuously for at least 5 minutes without reset or glitches</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Key Pin Assignments</h2>
+        <h3>FPGA ↔ ADXL345 (SPI)</h3>
+        <p>The ADXL345 accelerometer is connected to the FPGA via SPI on the JP1 GPIO header:</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Signal</th>
+                    <th>JP1 GPIO Pin</th>
+                    <th>FPGA Pin</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>SPI_MOSI (Master Out)</td>
+                    <td>GPIO[2]</td>
+                    <td>TBD</td>
+                </tr>
+                <tr>
+                    <td>SPI_MISO (Master In)</td>
+                    <td>GPIO[3]</td>
+                    <td>TBD</td>
+                </tr>
+                <tr>
+                    <td>SPI_CLK</td>
+                    <td>GPIO[4]</td>
+                    <td>TBD</td>
+                </tr>
+                <tr>
+                    <td>SPI_CS_N (Chip Select)</td>
+                    <td>GPIO[5]</td>
+                    <td>TBD</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>FPGA ↔ ESP32 (UART on JP1)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Signal</th>
+                    <th>JP1 GPIO Pin</th>
+                    <th>FPGA Pin</th>
+                    <th>ESP32 Pin</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>FPGA TX (→ ESP32 RX)</td>
+                    <td>GPIO[0]</td>
+                    <td>TBD</td>
+                    <td>GPIO 16</td>
+                </tr>
+                <tr>
+                    <td>FPGA RX (← ESP32 TX)</td>
+                    <td>GPIO[1]</td>
+                    <td>TBD</td>
+                    <td>GPIO 17</td>
+                </tr>
+                <tr>
+                    <td>GND</td>
+                    <td>GND (multiple pins)</td>
+                    <td>GND</td>
+                    <td>GND</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>ESP32 ↔ OLED Display (I2C)</h3>
+        <ul>
+            <li>SDA: GPIO 21 (I2C)</li>
+            <li>SCL: GPIO 22 (I2C)</li>
+            <li>VCC: 3.3V</li>
+            <li>GND: Ground</li>
+            <li>I2C Address: 0x3C</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>UART Communication Protocol</h2>
+        <h3>Packet Format</h3>
+        <p>The FPGA sends acceleration data as 6-byte packets, repeated at ~10 Hz minimum:</p>
+        <div class="code-block">
+Byte 0:     X acceleration (LSB, lower 8 bits)
+Byte 1:     X acceleration (MSB, upper 8 bits)
+Byte 2:     Y acceleration (LSB)
+Byte 3:     Y acceleration (MSB)
+Byte 4:     Z acceleration (LSB)
+Byte 5:     Z acceleration (MSB)
+
+All values are signed 16-bit integers, little-endian.
+        </div>
+        <p><strong>Example decoding in C:</strong></p>
+        <div class="code-block">
+uint8_t packet[6];
+// Read packet...
+int16_t accel_x = (int16_t)((packet[1] << 8) | packet[0]);
+int16_t accel_y = (int16_t)((packet[3] << 8) | packet[2]);
+int16_t accel_z = (int16_t)((packet[5] << 8) | packet[4]);
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Implementation Steps</h2>
+        <h3>Step 1: FPGA ADXL345 SPI Interface</h3>
+        <ol>
+            <li>Create SPI master controller in SystemVerilog</li>
+            <li>Configure ADXL345 for:
+                <ul>
+                    <li>±16g range (DATA_FORMAT register)</li>
+                    <li>Measurement mode enabled</li>
+                    <li>Data rate ~100 Hz (POWER_CTL register)</li>
+                </ul>
+            </li>
+            <li>Read all 6 acceleration register bytes (0x32–0x37) in sequence</li>
+            <li>Assemble into 16-bit X, Y, Z values</li>
+        </ol>
+
+        <h3>Step 2: FPGA UART Transmitter</h3>
+        <ol>
+            <li>Create UART TX module (9600 baud, 8N1)</li>
+            <li>Format acceleration data as 6-byte packet</li>
+            <li>Send packet every ~100 ms (10 Hz minimum)</li>
+            <li>Display packet count or status on 7-segment for debugging</li>
+        </ol>
+
+        <h3>Step 3: FPGA Top-Level Integration</h3>
+        <ol>
+            <li>Instantiate SPI controller, UART transmitter, and support modules</li>
+            <li>Create state machine: IDLE → READ_ACCEL → SEND_UART → WAIT → repeat</li>
+            <li>Map JP1 header GPIO pins in .qsf constraints file</li>
+            <li>Test: verify bitstream compiles and programs successfully</li>
+        </ol>
+
+        <h3>Step 4: ESP32 UART Reader</h3>
+        <ol>
+            <li>Configure UART2 on ESP32 (RX=GPIO16, TX=GPIO17, 9600 baud)</li>
+            <li>Implement packet reader: wait for 6-byte alignment, validate framing</li>
+            <li>Parse bytes into signed 16-bit acceleration values</li>
+            <li>Debug: print acceleration values to Serial Monitor</li>
+        </ol>
+
+        <h3>Step 5: ESP32 3D Cube Rendering</h3>
+        <ol>
+            <li>Define 8 cube vertices in normalized coordinates (-1 to +1)</li>
+            <li>Define 12 edges connecting vertices</li>
+            <li>Implement pitch/roll rotation matrices:
+                <ul>
+                    <li>Pitch (Y-axis): rotate around X</li>
+                    <li>Roll (X-axis): rotate around Z</li>
+                </ul>
+            </li>
+            <li>Implement 3D-to-2D perspective projection</li>
+            <li>Draw edges and vertices on OLED at 30+ Hz</li>
+        </ol>
+
+        <h3>Step 6: Acceleration-to-Angle Mapping</h3>
+        <ol>
+            <li>Map raw acceleration (±32768) to angle range (±90°)</li>
+            <li>Clamp angles to valid range</li>
+            <li>Apply smoothing filter (optional: moving average) for stability</li>
+        </ol>
+
+        <h3>Step 7: Testing and Debugging</h3>
+        <ol>
+            <li>Program FPGA bitstream</li>
+            <li>Upload ESP32 firmware via PlatformIO</li>
+            <li>Verify UART communication: use `pio device monitor` to check packets</li>
+            <li>Verify 3D cube renders correctly</li>
+            <li>Tilt board gently and observe cube rotation in real-time</li>
+            <li>Check LED indicators on FPGA match tilt direction</li>
+        </ol>
+    </div>
+
+    <div class="section">
+        <h2>Project File Structure</h2>
+        <div class="code-block">
+accelerometer-3d-cube/
+├── index.html                          (this file)
+├── fpga/
+│   ├── accelerometer_3d_cube.qpf       (Quartus project)
+│   ├── accelerometer_3d_cube.qsf       (Settings, pin constraints)
+│   ├── accelerometer_3d_cube.sdc       (Timing constraints)
+│   └── src/
+│       ├── accelerometer_top.sv        (Top-level FPGA module)
+│       ├── adxl345_spi.sv              (SPI master controller)
+│       └── uart_tx.sv                  (UART transmitter)
+└── esp32/
+    ├── platformio.ini                  (PlatformIO configuration)
+    └── src/
+        └── main.cpp                    (ESP32 firmware)
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Grading Criteria</h2>
+        <div class="success">
+            <strong>✅ Go / No-Go Grading: 30 Points All or Nothing</strong>
+        </div>
+        <p>ALL requirements must work for full credit. Partial implementations receive 0 points.</p>
+        <h3>Checklist for Success</h3>
+        <ul>
+            <li>☑️ FPGA reads ADXL345 acceleration data without errors</li>
+            <li>☑️ FPGA sends 6-byte packets to ESP32 at 10+ Hz</li>
+            <li>☑️ ESP32 receives and parses packets correctly (verified via monitor)</li>
+            <li>☑️ 3D cube renders on OLED display</li>
+            <li>☑️ Cube rotates smoothly when board is tilted</li>
+            <li>☑️ Tilt direction matches visual feedback (LEDs and cube orientation)</li>
+            <li>☑️ System runs continuously without crashes or data corruption</li>
+            <li>☑️ Latency is acceptable (&lt; 200 ms from tilt to visible cube rotation)</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Hints and Tips</h2>
+        <h3>FPGA Tips</h3>
+        <ul>
+            <li><strong>Clock Dividers:</strong> Use clock dividers to generate SPI clock (~1 MHz) and UART clock from 50 MHz.</li>
+            <li><strong>Register Reads:</strong> The ADXL345 supports multi-byte reads; read all 6 acceleration bytes in one SPI transaction for efficiency.</li>
+            <li><strong>Data Format:</strong> Confirm the ADXL345 range (±16g) and output resolution (16-bit) in the datasheet.</li>
+            <li><strong>Simulation:</strong> Use ModelSim to verify SPI timing and data reception before programming hardware.</li>
+        </ul>
+
+        <h3>ESP32 Tips</h3>
+        <ul>
+            <li><strong>UART Buffer:</strong> Check `Serial2.available()` before reading to avoid race conditions.</li>
+            <li><strong>Angle Mapping:</strong> Simple linear mapping from acceleration to angle works well for small tilts (&lt; ±30°).</li>
+            <li><strong>Cube Rotation Order:</strong> Apply rotations in a consistent order (e.g., pitch first, then roll) for predictable behavior.</li>
+            <li><strong>Frame Rate:</strong> Aim for 30 FPS or higher for smooth visual rotation.</li>
+            <li><strong>Filtering:</strong> A simple moving-average filter (5–10 samples) reduces noise and jitter.</li>
+        </ul>
+
+        <h3>Integration Tips</h3>
+        <ul>
+            <li><strong>Framing:</strong> Without explicit packet markers, use timeout logic: if no byte arrives for &gt; 1 second, resynchronize.</li>
+            <li><strong>Wiring:</strong> Double-check GND connections between FPGA and ESP32; mismatched reference causes signal corruption.</li>
+            <li><strong>Baud Rate:</strong> Both FPGA and ESP32 must use exactly 9600 baud. Off-by-one errors cause data loss.</li>
+            <li><strong>Level Shifting:</strong> FPGA output is 3.3V; ESP32 RX is 3.3V tolerant. No level shifter needed.</li>
+        </ul>
+
+        <h3>Debugging Tools</h3>
+        <ul>
+            <li><strong>FPGA:</strong> Use LEDs to show state (reading, transmitting, error). Display status on 7-segment.</li>
+            <li><strong>ESP32:</strong> Use `Serial.printf()` to log acceleration values and angles in real-time.</li>
+            <li><strong>UART Monitor:</strong> Use PlatformIO's `pio device monitor` to sniff raw UART traffic.</li>
+            <li><strong>Oscilloscope:</strong> If available, probe UART RX/TX and SPI signals to verify timing.</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>References and Resources</h2>
+        <ul>
+            <li><strong>ADXL345 Datasheet:</strong> Available on Analog Devices website; focus on SPI protocol and register map.</li>
+            <li><strong>DE10-Lite Reference Manual:</strong> Check GPIO header pinout and MAX 10 FPGA capabilities.</li>
+            <li><strong>ESP32 UART API:</strong> <code>Serial2.begin(), Serial2.available(), Serial2.read()</code></li>
+            <li><strong>3D Rotation Matrices:</strong> Standard pitch/roll matrices from graphics literature (no need for quaternions for this scope).</li>
+            <li><strong>Adafruit SSD1306 Library:</strong> Official library for OLED control; includes line drawing primitives.</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Commonly Asked Questions</h2>
+        <h3>Q: What is the ADXL345 update rate?</h3>
+        <p><strong>A:</strong> Default is 100 Hz. You can program the POWER_CTL register to change it, but 100 Hz is sufficient.</p>
+
+        <h3>Q: Do I need to calibrate the accelerometer?</h3>
+        <p><strong>A:</strong> Not for this challenge. The offset error is typically &lt; ±50 mg and won't significantly affect visual rotation.</p>
+
+        <h3>Q: Can I use I2C instead of SPI for the ADXL345?</h3>
+        <p><strong>A:</strong> Yes, if the board hardware supports it. SPI is usually faster and recommended.</p>
+
+        <h3>Q: What if the cube appears inverted or rotated incorrectly?</h3>
+        <p><strong>A:</strong> Check the rotation matrix order and the projection. Pitch and roll must map to the correct axes.</p>
+
+        <h3>Q: How do I handle UART packet loss?</h3>
+        <p><strong>A:</strong> Implement timeout logic: if no valid packet arrives within 1 second, resynchronize. Add a simple checksum or sync byte if needed.</p>
+    </div>
+
+    <div class="section">
+        <h2>Before You Start</h2>
+        <div class="note">
+            ⚠️ <strong>Important:</strong> Ensure you have the following ready:
+            <ul>
+                <li>DE10-Lite FPGA board with ADXL345 accelerometer connected</li>
+                <li>ESP32 DevKit board</li>
+                <li>128×64 I2C OLED display module (SSD1306)</li>
+                <li>JP1 (40-pin GPIO) header with male-to-male jumper wires</li>
+                <li>GND wire between FPGA and ESP32</li>
+                <li>Quartus Prime Lite 17.1 installed</li>
+                <li>PlatformIO VS Code extension or CLI</li>
+                <li>UART programmer or USB-to-UART adapter (if needed)</li>
+            </ul>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 40px; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+        <h3>🚀 Ready to build? Let's go! 🚀</h3>
+        <p>Good luck with Challenge 2!</p>
+    </div>
+</body>
+</html>

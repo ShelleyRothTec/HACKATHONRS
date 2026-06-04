@@ -1,0 +1,6 @@
+# Copyright (C) 1988-2017 Intel Corporation. All Rights Reserved.
+#
+# Your use of Intel Corporation's design tools, logic functions 
+# and other software and processes contained herein is subject to an agreement 
+# under which they are licensed.  You may not use the copy of this project unless you are authorized to do so.
+PROJECT_REVISION = "accelerometer_3d_cube"

@@ -1,0 +1,127 @@
+# Project-Wide Assignments
+set_global_assignment -name FAMILY "MAX 10"
+set_global_assignment -name DEVICE 10M50DAF484C7G
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION 17.1.0
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "2026-06-04 12:00:00"
+set_global_assignment -name LAST_QUARTUS_VERSION 17.1.0
+set_global_assignment -name VERILOG_FILE src/accelerometer_top.sv
+set_global_assignment -name VERILOG_FILE src/adxl345_spi.sv
+set_global_assignment -name VERILOG_FILE src/uart_tx.sv
+set_global_assignment -name SDC_FILE accelerometer_3d_cube.sdc
+
+# Pin Assignments for DE10-Lite
+# Clock
+set_location_assignment PIN_N5 -to MAX10_CLK1_50
+
+# Switches
+set_location_assignment PIN_C10 -to SW[0]
+set_location_assignment PIN_C11 -to SW[1]
+set_location_assignment PIN_D12 -to SW[2]
+set_location_assignment PIN_C12 -to SW[3]
+set_location_assignment PIN_A12 -to SW[4]
+set_location_assignment PIN_B12 -to SW[5]
+set_location_assignment PIN_A11 -to SW[6]
+set_location_assignment PIN_B11 -to SW[7]
+set_location_assignment PIN_A10 -to SW[8]
+set_location_assignment PIN_B10 -to SW[9]
+
+# Keys (Push buttons)
+set_location_assignment PIN_A7 -to KEY[0]
+set_location_assignment PIN_B8 -to KEY[1]
+
+# Red LEDs
+set_location_assignment PIN_A8 -to LEDR[0]
+set_location_assignment PIN_A9 -to LEDR[1]
+set_location_assignment PIN_A6 -to LEDR[2]
+set_location_assignment PIN_B6 -to LEDR[3]
+set_location_assignment PIN_A5 -to LEDR[4]
+set_location_assignment PIN_B5 -to LEDR[5]
+set_location_assignment PIN_A4 -to LEDR[6]
+set_location_assignment PIN_B4 -to LEDR[7]
+set_location_assignment PIN_C5 -to LEDR[8]
+set_location_assignment PIN_C6 -to LEDR[9]
+
+# 7-segment Displays
+set_location_assignment PIN_M9 -to HEX0[0]
+set_location_assignment PIN_M6 -to HEX0[1]
+set_location_assignment PIN_T9 -to HEX0[2]
+set_location_assignment PIN_T5 -to HEX0[3]
+set_location_assignment PIN_T1 -to HEX0[4]
+set_location_assignment PIN_T2 -to HEX0[5]
+set_location_assignment PIN_T4 -to HEX0[6]
+set_location_assignment PIN_R7 -to HEX0[7]
+
+set_location_assignment PIN_T10 -to HEX1[0]
+set_location_assignment PIN_T15 -to HEX1[1]
+set_location_assignment PIN_T14 -to HEX1[2]
+set_location_assignment PIN_T11 -to HEX1[3]
+set_location_assignment PIN_R13 -to HEX1[4]
+set_location_assignment PIN_R12 -to HEX1[5]
+set_location_assignment PIN_R11 -to HEX1[6]
+set_location_assignment PIN_R10 -to HEX1[7]
+
+set_location_assignment PIN_R9 -to HEX2[0]
+set_location_assignment PIN_T8 -to HEX2[1]
+set_location_assignment PIN_R6 -to HEX2[2]
+set_location_assignment PIN_T7 -to HEX2[3]
+set_location_assignment PIN_R8 -to HEX2[4]
+set_location_assignment PIN_P8 -to HEX2[5]
+set_location_assignment PIN_P9 -to HEX2[6]
+set_location_assignment PIN_N9 -to HEX2[7]
+
+set_location_assignment PIN_P4 -to HEX3[0]
+set_location_assignment PIN_L7 -to HEX3[1]
+set_location_assignment PIN_L8 -to HEX3[2]
+set_location_assignment PIN_M7 -to HEX3[3]
+set_location_assignment PIN_M8 -to HEX3[4]
+set_location_assignment PIN_L9 -to HEX3[5]
+set_location_assignment PIN_N8 -to HEX3[6]
+set_location_assignment PIN_P5 -to HEX3[7]
+
+set_location_assignment PIN_R5 -to HEX4[0]
+set_location_assignment PIN_W5 -to HEX4[1]
+set_location_assignment PIN_W6 -to HEX4[2]
+set_location_assignment PIN_V5 -to HEX4[3]
+set_location_assignment PIN_V6 -to HEX4[4]
+set_location_assignment PIN_U7 -to HEX4[5]
+set_location_assignment PIN_U8 -to HEX4[6]
+set_location_assignment PIN_V8 -to HEX4[7]
+
+set_location_assignment PIN_V9 -to HEX5[0]
+set_location_assignment PIN_W9 -to HEX5[1]
+set_location_assignment PIN_Y8 -to HEX5[2]
+set_location_assignment PIN_Y7 -to HEX5[3]
+set_location_assignment PIN_W8 -to HEX5[4]
+set_location_assignment PIN_W7 -to HEX5[5]
+set_location_assignment PIN_V7 -to HEX5[6]
+set_location_assignment PIN_U9 -to HEX5[7]
+
+# Arduino Header (ARDUINO_IO)
+set_location_assignment PIN_AB5 -to ARDUINO_IO[0]
+set_location_assignment PIN_AB6 -to ARDUINO_IO[1]
+set_location_assignment PIN_AB7 -to ARDUINO_IO[2]
+set_location_assignment PIN_AB8 -to ARDUINO_IO[3]
+set_location_assignment PIN_AB9 -to ARDUINO_IO[4]
+set_location_assignment PIN_Y10 -to ARDUINO_IO[5]
+set_location_assignment PIN_AA10 -to ARDUINO_IO[6]
+set_location_assignment PIN_AA9 -to ARDUINO_IO[7]
+set_location_assignment PIN_AB10 -to ARDUINO_IO[8]
+set_location_assignment PIN_AB11 -to ARDUINO_IO[9]
+set_location_assignment PIN_AB12 -to ARDUINO_IO[10]
+set_location_assignment PIN_AB13 -to ARDUINO_IO[11]
+set_location_assignment PIN_AA12 -to ARDUINO_IO[12]
+set_location_assignment PIN_AA13 -to ARDUINO_IO[13]
+set_location_assignment PIN_AB14 -to ARDUINO_IO[14]
+set_location_assignment PIN_AB15 -to ARDUINO_IO[15]
+
+set_location_assignment PIN_AA14 -to ARDUINO_RESET_N
+
+# Compilation settings
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION_DESIGN_TEMPERATURE 85
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION_USER_SUPPLIED_COOLING_DESIGN_TEMPERATURE 85
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION_AMBIENT_TEMPERATURE 85
+set_global_assignment -name POWER_USE_SMART_COMPILATION OFF
+set_global_assignment -name FLOW_ENABLE_RTL_VIEWER OFF
+set_global_assignment -name TOP_LEVEL_ENTITY accelerometer_top
